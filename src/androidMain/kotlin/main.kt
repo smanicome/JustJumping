@@ -1,4 +1,5 @@
 import android.app.Activity
+import android.content.Intent
 import android.util.DisplayMetrics
 import com.soywiz.klock.NumberOfTimes
 import com.soywiz.klock.TimeSpan
@@ -15,9 +16,11 @@ import com.soywiz.korim.format.readBitmap
 import com.soywiz.korim.paint.ColorPaint
 import com.soywiz.korinject.AsyncInjector
 import com.soywiz.korio.android.androidContext
+import com.soywiz.korio.android.withAndroidContext
 import com.soywiz.korio.async.launchImmediately
 import com.soywiz.korio.file.std.resourcesVfs
 import com.soywiz.korma.geom.SizeInt
+import kotlinx.coroutines.coroutineScope
 
 suspend fun main() = Korge(Korge.Config(module = JumperModule.create()))
 
@@ -71,6 +74,13 @@ class PlayingScene(val jumper: Jumper) : Scene() {
 		val scoreText = text(jumper.score.toInt().toString()).xy(30,60)
 		scoreText.color = ColorPaint(0xFF000000.toInt())
 		scoreText.scale(views.virtualHeight * 0.05 / scoreText.height)
+
+		val goalText = text("Goal: 30 000")
+		goalText.scale(views.virtualHeight * 0.05 / scoreText.height)
+		val goalX = views.virtualWidth - goalText.width * goalText.scaleX - views.virtualWidth * 0.05
+
+		goalText.xy(goalX,60.0)
+		goalText.color = ColorPaint(0xFF000000.toInt())
 
 		val jumpHeight = views.virtualHeight  * -20.0 / 1480
 		val scaledJumperHeight = jumper.height * jumper.scaleY
@@ -152,17 +162,18 @@ class EndScene(val jumper: Jumper): Scene() {
 		scaledWidth = score.width * score.scaleX
 		score.xy(views.virtualWidthDouble / 2 - scaledWidth / 2, views.virtualHeightDouble * 0.2)
 
-		val playBitmap = resourcesVfs["play.png"].readBitmap()
-		val play = image(playBitmap)
-		play.scale(views.virtualWidth * 0.2 / play.width)
+		val stopBitmap = resourcesVfs["stop.png"].readBitmap()
+		val stop = image(stopBitmap)
+		stop.scale(views.virtualWidth * 0.2 / stop.width)
 
-		scaledWidth = play.width * play.scaleX
-		play.xy(views.virtualWidthDouble / 2 - scaledWidth / 2, views.virtualHeightDouble * 0.7)
+		scaledWidth = stop.width * stop.scaleX
+		stop.xy(views.virtualWidthDouble / 2 - scaledWidth / 2, views.virtualHeightDouble * 0.7)
 
-		play.onClick {
-			jumper.resetJumper()
+		stop.onClick {
 			channel.stop()
-			launchImmediately { sceneContainer.changeTo<PlayingScene>() }
+			val activity = androidContext() as Activity
+			activity.setResult(if(jumper.hasWon()) 1 else 2)
+			activity.finish()
 		}
 
 		if(!jumper.hasWon()) {

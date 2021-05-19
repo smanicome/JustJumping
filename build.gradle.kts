@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.tasks.manifest.mergeManifestsForApplication
 import com.soywiz.korge.gradle.*
 
 buildscript {
@@ -22,7 +23,9 @@ korge {
 	id = "fr.umlv.todogame.justjumping"
 	name = "Just Jumping"
 	orientation = Orientation.PORTRAIT
+	fullscreen = true
 	icon = File(rootDir, "icon.png")
+
 
 // To enable all targets at once
 
